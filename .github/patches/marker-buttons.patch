@@ -1,1 +1,93 @@
 
+diff --git a/lib/open890_web/live/radio_live.html.heex b/lib/open890_web/live/radio_live.html.heex
+index abcdef1..1234567 100644
+--- a/lib/open890_web/live/radio_live.html.heex
++++ b/lib/open890_web/live/radio_live.html.heex
+@@ -25,6 +25,15 @@
+     <!-- existing controls above -->
+ 
++    <div class="marker-controls">
++      <span class="marker-label">Markers:</span>
++      <button class="marker-btn red"
++              title="Toggle Red Marker at Current Frequency"
++              phx-click="toggle_marker" phx-value-color="r">Red</button>
++      <button class="marker-btn green"
++              title="Toggle Green Marker at Current Frequency"
++              phx-click="toggle_marker" phx-value-color="g">Green</button>
++      <button class="marker-btn blue"
++              title="Toggle Blue Marker at Current Frequency"
++              phx-click="toggle_marker" phx-value-color="b">Blue</button>
++    </div>
+ 
+     <!-- existing controls below -->
+diff --git a/lib/open890_web/live/radio_live.ex b/lib/open890_web/live/radio_live.ex
+index abcdef2..1234568 100644
+--- a/lib/open890_web/live/radio_live.ex
++++ b/lib/open890_web/live/radio_live.ex
+@@ -120,6 +120,36 @@ defmodule Open890Web.RadioLive do
+   # existing code...
+ 
++  @impl true
++  def handle_event("toggle_marker", %{"color" => color}, socket) do
++    freq_hz = socket.assigns[:current_frequency_hz] || 0
++    markers = socket.assigns[:markers] || []
++
++    present? =
++      Enum.any?(markers, fn m ->
++        c = to_string(m[:color] || m["color"] || "")
++        f = m[:freq_hz] || m["freq_hz"] || 0
++        c == color and abs(f - freq_hz) <= 200
++      end)
++
++    color_code = case color do
++      "r" -> "r"
++      "g" -> "g"
++      "b" -> "b"
++      _ -> "b"
++    end
++
++    if present? do
++      Open890.ConnectionCommands.send_keys(socket.assigns.radio_pid, "c" <> color_code)
++    else
++      Open890.ConnectionCommands.send_keys(socket.assigns.radio_pid, "m" <> color_code)
++    end
++
++    {:noreply, socket}
++  end
++
+   # rest of module...
+ end
+diff --git a/assets/css/app.css b/assets/css/app.css
+index abcdef3..1234569 100644
+--- a/assets/css/app.css
++++ b/assets/css/app.css
+@@ END
++
++/* === Marker Button Styles === */
++.marker-controls {
++  display: flex;
++  align-items: center;
++  gap: 6px;
++  margin: 6px 0;
++}
++.marker-label {
++  font-size: 13px;
++  opacity: 0.85;
++}
++.marker-btn {
++  border: none;
++  color: #fff;
++  border-radius: 8px;
++  padding: 6px 10px;
++  font-size: 13px;
++  cursor: pointer;
++  box-shadow: 0 1px 2px rgba(0,0,0,.18);
++  transition: filter .12s ease, transform .12s ease;
++}
++.marker-btn:hover {
++  filter: brightness(1.08);
++  transform: translateY(-1px);
++}
++.marker-btn.red   { background: #dc2626; }
++.marker-btn.green { background: #16a34a; }
++.marker-btn.blue  { background: #2563eb; }
