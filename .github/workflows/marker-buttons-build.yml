@@ -11,7 +11,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
         with:
-          ref: v1.2.0-fork
+          ref: v.1.2.0-fork
 
       - name: Apply marker-buttons patch
         run: |
